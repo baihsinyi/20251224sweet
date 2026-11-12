@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Donald & Daisy 情侶專屬空間</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'donald-blue': '#1e5f8a',
+                        'donald-light': '#e0f2fe',
+                        'donald-yellow': '#facc15',
+                        'daisy-pink': '#f472b6',
+                        'daisy-light': '#fdf2f8',
+                        'sailor-navy': '#0f172a'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* 支援手機與桌機平滑自適應背景 */
+        @media (min-width: 768px) {
+            body {
+                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                min-height: 100vh;
+                padding-top: 2rem;
+                padding-bottom: 5rem;
+            }
+            .app-container {
+                width: 100%;
+                max-width: 440px;
+                background: #f8fafc;
+                box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+                border-radius: 2.5rem;
+                overflow: hidden;
+                border: 1px solid #cbd5e1;
+            }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.92); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .modal-animate {
+            animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-28">
+
+    <!-- 全域提示訊息 Toast (取代 alert) -->
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] pointer-events-none transition-all duration-300 opacity-0 -translate-y-4">
+        <div id="toast-message" class="bg-sailor-navy text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2">
+            <span>✨</span>
+            <span id="toast-text">操作成功</span>
+        </div>
+    </div>
+
+    <div class="app-container w-full min-h-screen md:min-h-[850px] flex flex-col justify-between relative bg-slate-100 pb-20">
+
+        <!-- 頂部導航與紀念日看板 -->
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+            <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl animate-pulse">💖</span>
+                    <div>
+                        <h1 class="text-sm font-bold text-sailor-navy flex items-center gap-1.5">
+                            <span id="header-boy">唐老鴨</span> & <span id="header-girl">黛西</span>
+                        </h1>
+                        <p id="sync-status-text" class="text-[10px] text-slate-400">專屬甜蜜小天地 • 點擊右側設定雲端連線</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="openSyncModal()" id="sync-badge-btn" class="px-2.5 py-1 rounded-full bg-blue-50 text-donald-blue text-[10px] font-bold hover:bg-blue-100 transition flex items-center gap-1" title="雙人連線設定">
+                        <span id="sync-dot" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                        <span id="sync-label">單機模式</span>
+                    </button>
+                    <button onclick="openSettingsModal()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition" title="設定">
+                        ⚙️
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主內容容器 -->
+        <main class="max-w-md mx-auto px-4 pt-4 space-y-4 w-full flex-1">
+
+            <!-- ==================== 頁籤 1: 🌟 生活 (Life & Calendar & Fund) ==================== -->
+            <section id="view-life" class="space-y-4">
+                
+                <!-- 紀念日與倒數計費卡片 -->
+                <div id="anniversary-card-bg" class="bg-gradient-to-br from-donald-blue to-sailor-navy text-white rounded-3xl p-5 shadow-lg relative overflow-hidden">
+                    <div id="anniversary-bg-icon" class="absolute -right-4 -bottom-4 text-8xl opacity-15 select-none">💖</div>
+                    <div class="flex justify-between items-start relative z-10">
+                        <div>
+                            <span class="text-[10px] bg-white/20 px-2.5 py-0.5 rounded-full text-donald-yellow font-bold">💖 我們的愛戀計時器</span>
+                            <h2 class="text-2xl font-extrabold mt-2 tracking-tight">在一起第 <span id="days-count" class="text-donald-yellow">0</span> 天</h2>
+                            <p class="text-xs text-slate-200 mt-0.5">紀念日：<span id="anniversary-date-display">2024.03.01</span></p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-300 block">距下次週年</span>
+                            <span id="next-anniversary" class="text-sm font-bold text-donald-yellow">計算中...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 月曆行事曆卡片 -->
+                <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-sailor-navy">🗓️ 兩人的甜蜜行事曆</h3>
+                            <p id="calendar-month-title" class="text-xs text-slate-400 mt-0.5">2026年 11月</p>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="changeMonth(-1)" class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 flex items-center justify-center text-xs">◀</button>
+                            <button onclick="changeMonth(1)" class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 flex items-center justify-center text-xs">▶</button>
+                            <button onclick="openCalendarModal()" class="ml-1 px-3 py-1.5 rounded-full bg-donald-light text-donald-blue text-xs font-bold hover:bg-blue-100 transition">
+                                + 新增行程
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 月曆網格 (星期標題) -->
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 pb-1 border-b border-slate-100">
+                        <span class="text-rose-400">日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span class="text-donald-blue">六</span>
+                    </div>
+                    <!-- 月曆日期格子 -->
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 text-center">
+                        <!-- 動態填入 -->
+                    </div>
+
+                    <!-- 當日行程清單 -->
+                    <div class="border-t border-slate-100 pt-3">
+                        <h4 id="selected-date-title" class="text-xs font-bold text-sailor-navy mb-2">當日行程</h4>
+                        <div id="calendar-events-list" class="space-y-2 max-h-36 overflow-y-auto no-scrollbar">
+                            <!-- 動態填入 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 夢想撲滿卡片 -->
+                <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-sailor-navy">🐷 共同夢想撲滿</h3>
+                                <button onclick="openEditFundModal()" class="text-[10px] text-slate-400 hover:text-donald-blue underline">編輯目標</button>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-0.5" id="fund-goal-display">目標：<span id="fund-title-text">日本東京迪士尼雙人行</span> (NT$ <span id="fund-target-text">60,000</span>)</p>
+                        </div>
+                        <button onclick="openFundModal()" class="px-3 py-1.5 rounded-full bg-daisy-light text-daisy-pink text-xs font-bold hover:bg-pink-100 transition">
+                            + 記一筆
+                        </button>
+                    </div>
+                    <!-- 進度條 -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-xs font-bold">
+                            <span class="text-sailor-navy">已存入 NT$ <span id="fund-current">38,500</span></span>
+                            <span class="text-daisy-pink" id="fund-percent">64%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                            <div id="fund-bar" class="bg-gradient-to-r from-donald-blue to-daisy-pink h-full rounded-full transition-all duration-500" style="width: 64%;"></div>
+                        </div>
+                    </div>
+                    <!-- 存領明細 -->
+                    <div class="border-t border-slate-100 pt-3">
+                        <h4 class="text-[11px] font-bold text-slate-400 mb-2">近期存領明細 (點擊 ✕ 可刪除並自動回補)</h4>
+                        <div id="fund-logs" class="space-y-2 max-h-36 overflow-y-auto no-scrollbar">
+                            <!-- 動態填入 -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ==================== 頁籤 2: 🎡 美食轉盤與餐廳牆 (Food Roulette & Restaurants) ==================== -->
+            <section id="view-food" class="hidden space-y-4">
+                
+                <!-- 美食種類幸運輪盤 -->
+                <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs space-y-4 text-center">
+                    <div>
+                        <h3 class="text-sm font-bold text-sailor-navy">🎡 今天吃什麼？美食種類轉盤</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">不知道吃什麼時，讓運氣來幫你們決定！</p>
+                    </div>
+                    <div id="roulette-display" class="py-7 px-4 bg-gradient-to-br from-donald-light to-daisy-light rounded-2xl border border-blue-100/60 transition-all">
+                        <span id="roulette-result" class="text-lg font-extrabold text-sailor-navy">點擊下方按鈕開始隨機抽選！✨</span>
+                    </div>
+                    <button id="spin-btn" onclick="spinRoulette()" class="w-full py-3 rounded-2xl bg-donald-blue text-white text-sm font-bold shadow-md hover:bg-blue-700 active:scale-[0.98] transition">
+                        開始旋轉美食種類 🎯
+                    </button>
+                </div>
+
+                <!-- 一起吃過的餐廳牆與評分 -->
+                <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-sailor-navy">🍽️ 一起吃過的餐廳牆</h3>
+                                <span id="restaurant-count-badge" class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">1 家</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-0.5">記錄約會餐廳並留下雙人星等評分</p>
+                        </div>
+                        <button onclick="openRestaurantModal()" class="px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold hover:bg-amber-200 transition">
+                            + 新增餐廳
+                        </button>
+                    </div>
+                    <div id="restaurant-list" class="space-y-2.5">
+                        <!-- 動態填入 -->
+                    </div>
+                </div>
+
+            </section>
+
+
+            <!-- ==================== 頁籤 3: 💖 回憶與足跡 (Memories & Wall & Capsule) ==================== -->
+            <section id="view-memories" class="hidden space-y-4">
+
+                <!-- 互動式足跡地圖摘要卡片 -->
+                <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-sailor-navy">🗺️ 我們走過的足跡地圖</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">已點亮 <span id="footprint-count" class="font-bold text-donald-blue">1</span> 個縣市回憶</p>
+                        </div>
+                        <button onclick="openMemoryModal()" class="px-3 py-1.5 rounded-full bg-donald-light text-donald-blue text-xs font-bold hover:bg-blue-100 transition">
+                            + 寫下回憶
+                        </button>
+                    </div>
+                    <!-- 縣市小徽章清單 -->
+                    <div id="footprint-badges" class="flex flex-wrap gap-1.5 pt-1">
+                        <!-- 動態填入 -->
+                    </div>
+                    <!-- 回憶故事小卡列表 -->
+                    <div id="memory-list" class="space-y-2 pt-2 border-t border-slate-100 max-h-48 overflow-y-auto no-scrollbar">
+                        <!-- 動態填入 -->
+                    </div>
+                </div>
+
+                <!-- 已看過影片專區 -->
+                <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-sailor-navy">🎬 已一起看過的影片</h3>
+                                <span id="movie-count-badge" class="text-[10px] bg-blue-100 text-donald-blue px-2 py-0.5 rounded-full font-bold">1 部</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-0.5">記錄兩人的專屬影視牆</p>
+                        </div>
+                        <button onclick="openMovieModal()" class="px-3 py-1.5 rounded-full bg-donald-light text-donald-blue text-xs font-bold hover:bg-blue-100 transition">
+                            + 新增影片
+                        </button>
+                    </div>
+                    <div id="movie-list" class="grid grid-cols-2 gap-3">
+                        <!-- 動態填入 -->
+                    </div>
+                </div>
+
+                <!-- 已一起看過的演唱會專區 -->
+                <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-sailor-navy">🎤 已一起看過的演唱會</h3>
+                                <span id="concert-count-badge" class="text-[10px] bg-pink-100 text-daisy-pink px-2 py-0.5 rounded-full font-bold">1 場</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-0.5">記錄雙人狂歡的現場音樂回憶</p>
+                        </div>
+                        <button onclick="openConcertModal()" class="px-3 py-1.5 rounded-full bg-daisy-light text-daisy-pink text-xs font-bold hover:bg-pink-100 transition">
+                            + 新增演唱會
+                        </button>
+                    </div>
+                    <div id="concert-list" class="space-y-2.5">
+                        <!-- 動態填入 -->
+                    </div>
+                </div>
+
+                <!-- 願望清單 -->
+                <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-sailor-navy">✨ 兩人的未來願望清單</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">一起完成的清單 (點擊可打勾完成)</p>
+                        </div>
+                        <button onclick="openBucketModal()" class="px-3 py-1.5 rounded-full bg-donald-light text-donald-blue text-xs font-bold hover:bg-blue-100 transition">
+                            + 新增願望
+                        </button>
+                    </div>
+                    <div id="bucket-list" class="space-y-2">
+                        <!-- 動態填入 -->
+                    </div>
+                </div>
+
+                <!-- 給對方的小紙條 -->
+                <div class="bg-gradient-to-br from-slate-900 to-sailor-navy text-white rounded-3xl p-5 shadow-xl relative overflow-hidden space-y-3">
+                    <div class="flex justify-between items-start relative z-10">
+                        <div>
+                            <span class="text-xs bg-white/15 px-2.5 py-0.5 rounded-full text-donald-yellow font-bold">💌 甜蜜悄悄話</span>
+                            <h3 class="text-sm font-bold mt-2">給對方的小紙條</h3>
+                            <p class="text-xs text-slate-300 mt-1">隨時留下想對另一半說的心裡話 (已留下 <span id="capsule-count" class="text-donald-yellow font-bold">1</span> 張紙條)</p>
+                        </div>
+                        <div class="text-3xl">📝</div>
+                    </div>
+                    <button onclick="openCapsuleModal()" class="w-full py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 transition text-xs font-bold border border-white/20 text-center">
+                        查看或留下給對方的小紙條 ✨
+                    </button>
+                </div>
+
+            </section>
+
+
+            <!-- ==================== 頁籤 4: 👤 彼此的貼心小檔案 (Profiles) ==================== -->
+            <section id="view-profiles" class="hidden space-y-4">
+                
+                <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-sailor-navy">👤 彼此的貼心小檔案</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">紀錄對方的生活習慣、尺寸與喜好，貼心不踩雷</p>
+                        </div>
+                        <button onclick="openProfileModal()" class="px-3 py-1.5 rounded-full bg-donald-light text-donald-blue text-xs font-bold hover:bg-blue-100 transition">
+                            + 新增項目
+                        </button>
+                    </div>
+
+                    <!-- 檔案切換小標籤 -->
+                    <div class="flex bg-slate-100 p-1 rounded-2xl">
+                        <button onclick="switchProfileTab('boy')" id="btn-profile-boy" class="flex-1 py-2 text-xs font-bold rounded-xl bg-white text-donald-blue shadow-xs transition"><span id="tab-boy-name">唐老鴨</span>的檔案</button>
+                        <button onclick="switchProfileTab('girl')" id="btn-profile-girl" class="flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 transition"><span id="tab-girl-name">黛西</span>的檔案</button>
+                    </div>
+
+                    <!-- 檔案內容區域 -->
+                    <div id="profile-content-container" class="space-y-2.5 pt-1">
+                        <!-- 動態載入 -->
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+
+        <!-- 底部四頁籤切換導航列 -->
+        <nav class="fixed md:absolute bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-2.5 flex justify-between z-40 md:rounded-b-[2.5rem]">
+            <button onclick="switchTab('life')" id="nav-life" class="flex flex-col items-center gap-1 text-donald-blue transition px-3 py-1">
+                <span class="text-lg">🌟</span>
+                <span class="text-[10px] font-bold">生活</span>
+            </button>
+            <button onclick="switchTab('food')" id="nav-food" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition px-3 py-1">
+                <span class="text-lg">🎡</span>
+                <span class="text-[10px] font-bold">美食</span>
+            </button>
+            <button onclick="switchTab('memories')" id="nav-memories" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition px-3 py-1">
+                <span class="text-lg">💖</span>
+                <span class="text-[10px] font-bold">回憶</span>
+            </button>
+            <button onclick="switchTab('profiles')" id="nav-profiles" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition px-3 py-1">
+                <span class="text-lg">👤</span>
+                <span class="text-[10px] font-bold">檔案</span>
+            </button>
+        </nav>
+
+    </div><!-- End app-container -->
+
+
+    <!-- ==================== Modals 互動彈跳視窗 ==================== -->
+
+    <!-- Modal: 設定 -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4 modal-animate">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-sailor-navy">⚙️ 專屬空間設定</h3>
+                <button onclick="closeModal('settings-modal')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">男生暱稱</label>
+                    <input id="input-boy-nick" type="text" value="唐老鴨" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:border-donald-blue">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">女生暱稱</label>
+                    <input id="input-girl-nick" type="text" value="黛西" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:border-daisy-pink">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">交往紀念日</label>
+                    <input id="input-anniversary-date" type="date" value="2024-03-01" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:border-donald-blue">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">計時器背景插圖主題</label>
+                    <select id="input-bg-icon-style" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:border-donald-blue">
+                        <option value="💖">💖 浪漫愛心</option>
+                        <option value="🦆">🦆 甜蜜唐老鴨</option>
+                        <option value="✨">✨ 閃亮星光</option>
+                        <option value="🌹">🌹 永恆玫瑰</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="saveSettings()" class="w-full py-3 rounded-2xl bg-donald-blue text-white text-sm font-bold shadow-md hover:bg-blue-700 transition">儲存設定</button>
+        </div>
+    </div>
+
+    <!-- Modal: 新增行事曆行程 -->
+    <div id="calendar-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4 modal-animate">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-sailor-navy">🗓️ 新增甜蜜行程</h3>
+                <button onclick="closeModal('calendar-modal')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">行程日期</label>
+                    <input id="input-cal-date" type="date" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">行程內容</label>
+                    <input id="input-cal-title" type="text" placeholder="例如：陽明山看夜景、週年晚餐" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                </div>
+            </div>
+            <button onclick="addCalendarEvent()" class="w-full py-3 rounded-2xl bg-donald-blue text-white text-sm font-bold shadow-md">新增行程</button>
+        </div>
+    </div>
+
+    <!-- Modal: 夢想撲滿記帳 -->
+    <div id="fund-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4 modal-animate">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-sailor-navy">🐷 夢想撲滿記帳</h3>
+                <button onclick="closeModal('fund-modal')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div class="flex bg-slate-100 p-1 rounded-2xl">
+                    <button onclick="setFundMode('deposit')" id="mode-deposit" class="flex-1 py-1.5 text-xs font-bold rounded-xl bg-white text-daisy-pink shadow-xs transition">存入金額 (+)</button>
+                    <button onclick="setFundMode('withdraw')" id="mode-withdraw" class="flex-1 py-1.5 text-xs font-bold rounded-xl text-slate-500 transition">領出金額 (-)</button>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">操作人</label>
+                    <select id="input-fund-who" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                        <option id="opt-fund-boy" value="唐老鴨">唐老鴨</option>
+                        <option id="opt-fund-girl" value="黛西">黛西</option>
+                        <option value="兩人共同">兩人共同</option>
+                    </select>
+                </div>
+                <input id="input-fund-amount" type="number" placeholder="金額 (NT$)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <input id="input-fund-note" type="text" placeholder="備註 (例如: 每月固定儲蓄、零錢筒)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+            </div>
+            <button onclick="addFundRecord()" class="w-full py-3 rounded-2xl bg-daisy-pink text-white text-sm font-bold shadow-md">確認送出</button>
+        </div>
+    </div>
+
+    <!-- Modal: 編輯夢想撲滿目標 -->
+    <div id="edit-fund-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4 modal-animate">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-sailor-navy">🎯 編輯夢想目標</h3>
+                <button onclick="closeModal('edit-fund-modal')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">夢想目標名稱</label>
+                    <input id="input-edit-fund-title" type="text" placeholder="例: 日本東京迪士尼雙人行" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">目標總金額 (NT$)</label>
+                    <input id="input-edit-fund-target" type="number" placeholder="例: 60000" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                </div>
+            </div>
+            <button onclick="saveFundGoal()" class="w-full py-3 rounded-2xl bg-donald-blue text-white text-sm font-bold shadow-md">儲存新目標</button>
+        </div>
+    </div>
+
+    <!-- Modal: 新增餐廳評分 -->
+    <div id="restaurant-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4 modal-animate">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-sailor-navy">🍽️ 新增約會餐廳</h3>
+                <button onclick="closeModal('restaurant-modal')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">✕</button>
+            </div>
+            <div class="space-y-3">
+                <input id="input-rest-name" type="text" placeholder="餐廳名稱 (例: 屋馬燒肉)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <input id="input-rest-type" type="text" placeholder="料理種類 (例: 頂級燒肉、義式料理)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <input id="input-rest-note" type="text" placeholder="短評或推薦菜色 (例: 雞湯超好喝、海鮮粥必點)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">雙人綜合評分</label>
+                    <select id="input-rest-rating" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                        <option value="5.0">⭐ 5.0 (滿分推薦！絕對二訪)</option>
+                        <option value="4.5">⭐ 4.5 (非常好吃、氣氛佳)</option>
+                        <option value="4.0">⭐ 4.0 (不錯吃、CP值高)</option>
+                        <option value="3.5">⭐ 3.5 (中規中矩)</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="addRestaurantItem()" class="w-full py-3 rounded-2xl bg-amber-500 text-white text-sm font-bold shadow-md">儲存餐廳紀錄</button>
+        </div>
+    </div>
+
+    <!-- Modal: 寫下足跡回憶 -->
+    <div id="memory-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4 modal-animate">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-sailor-navy">🗺️ 寫下兩人足跡回憶</h3>
+                <button onclick="closeModal('memory-modal')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">✕</button>
+            </div>
+            <div class="space-y-3">
+                <select id="input-mem-city" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                    <option value="台北市">📍 台北市</option>
+                    <option value="新北市">📍 新北市</option>
+                    <option value="桃園市">📍 桃園市</option>
+                    <option value="新竹縣市">📍 新竹縣市</option>
+                    <option value="苗栗縣">📍 苗栗縣</option>
+                    <option value="台中市" selected>📍 台中市</option>
+                    <option value="彰化縣">📍 彰化縣</option>
+                    <option value="南投縣">📍 南投縣</option>
+                    <option value="雲林縣">📍 雲林縣</option>
+                    <option value="嘉義縣市">📍 嘉義縣市</option>
+                    <option value="台南市">📍 台南市</option>
+                    <option value="高雄市">📍 高雄市</option>
+                    <option value="屏東縣">📍 屏東縣</option>
+                    <option value="宜蘭縣">📍 宜蘭縣</option>
+                    <option value="花蓮縣">📍 花蓮縣</option>
+                    <option value="台東縣">📍 台東縣</option>
+                    <option value="離島/海外">✈️ 離島 / 海外旅遊</option>
+                </select>
+                <input id="input-mem-title" type="text" placeholder="地點與標題 (例: 勤美綠園道散步)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <input id="input-mem-date" type="date" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <textarea id="input-mem-desc" rows="3" placeholder="寫下當時發生的趣事或心情..." class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm resize-none"></textarea>
+            </div>
+            <button onclick="addMemoryItem()" class="w-full py-3 rounded-2xl bg-donald-blue text-white text-sm font-bold shadow-md">點亮足跡並儲存</button>
+        </div>
+    </div>
+
+    <!-- Modal: 新增已看過影片 -->
+    <div id="movie-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4 modal-animate">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-sailor-navy">🎬 新增一起看過的影片</h3>
+                <button onclick="closeModal('movie-modal')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">✕</button>
+            </div>
+            <div class="space-y-3">
+                <input id="input-movie-title" type="text" placeholder="電影 / 影集名稱 (例: 你的名字)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <input id="input-movie-place" type="text" placeholder="觀看地點 (例: 威秀影城、在家Netflix)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <input id="input-movie-date" type="date" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <select id="input-movie-rating" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                    <option value="5.0 (雙人好評)">⭐ 5.0 (雙人好評)</option>
+                    <option value="4.5 (超好看推推)">⭐ 4.5 (超好看推推)</option>
+                    <option value="4.0 (還不錯看)">⭐ 4.0 (還不錯看)</option>
+                    <option value="3.0 (普通打發時間)">⭐ 3.0 (普通打發時間)</option>
+                </select>
+            </div>
+            <button onclick="addMovieItem()" class="w-full py-3 rounded-2xl bg-donald-blue text-white text-sm font-bold shadow-md">加入影視牆</button>
+        </div>
+    </div>
+
+    <!-- Modal: 新增已看過演唱會 -->
+    <div id="concert-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4 modal-animate">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-sailor-navy">🎤 新增演唱會紀錄</h3>
+                <button onclick="closeModal('concert-modal')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">✕</button>
+            </div>
+            <div class="space-y-3">
+                <input id="input-concert-title" type="text" placeholder="演唱會名稱 (例: 五月天巡迴演唱會)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <input id="input-concert-location" type="text" placeholder="地點與座位 (例: 高雄世運 / 搖滾A區)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <input id="input-concert-date" type="date" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">雙人演唱會評分</label>
+                    <select id="input-concert-rating" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                        <option value="5.0">⭐ 5.0 / 5.0 (超級震撼難忘)</option>
+                        <option value="4.5">⭐ 4.5 / 5.0 (超嗨很好聽)</option>
+                        <option value="4.0">⭐ 4.0 / 5.0 (氣氛很棒)</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="addConcertItem()" class="w-full py-3 rounded-2xl bg-daisy-pink text-white text-sm font-bold shadow-md">儲存演唱會紀錄</button>
+        </div>
+    </div>
+
+    <!-- Modal: 新增未來願望清單 -->
+    <div id="bucket-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4 modal-animate">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-sailor-navy">✨ 新增未來願望</h3>
+                <button onclick="closeModal('bucket-modal')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">✕</button>
+            </div>
+            <div class="space-y-3">
+                <input id="input-bucket-title" type="text" placeholder="想一起完成的事 (例: 一起去看北海道雪景)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+            </div>
+            <button onclick="addBucketItem()" class="w-full py-3 rounded-2xl bg-donald-blue text-white text-sm font-bold shadow-md">加入願望清單</button>
+        </div>
+    </div>
+
+    <!-- Modal: 給對方的小紙條 -->
+    <div id="capsule-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4 modal-animate max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-sailor-navy">💌 給對方的甜蜜小紙條</h3>
+                <button onclick="closeModal('capsule-modal')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">✕</button>
+            </div>
+            
+            <!-- 歷史紙條列表 -->
+            <div id="capsule-list" class="space-y-2.5 overflow-y-auto no-scrollbar max-h-52 pr-1">
+                <!-- 動態填入 -->
+            </div>
+
+            <!-- 寫新紙條表單 -->
+            <div class="border-t border-slate-100 pt-3 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-500">寫一張新紙條：</span>
+                    <select id="input-capsule-sender" class="text-xs bg-slate-100 rounded-lg px-2 py-1 font-bold text-sailor-navy">
+                        <option id="opt-cap-boy" value="唐老鴨">來自 唐老鴨</option>
+                        <option id="opt-cap-girl" value="黛西">來自 黛西</option>
+                    </select>
+                </div>
+                <textarea id="input-capsule-text" rows="2" placeholder="寫下想對另一半說的話..." class="w-full px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-sm resize-none"></textarea>
+                <button onclick="addCapsuleNote()" class="w-full py-2.5 rounded-2xl bg-sailor-navy text-white text-xs font-bold shadow-md hover:bg-slate-800 transition">貼上小紙條 💌</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 新增貼心小檔案項目 -->
+    <div id="profile-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4 modal-animate">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-sailor-navy">👤 新增貼心小檔案項目</h3>
+                <button onclick="closeModal('profile-modal')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">對象</label>
+                    <select id="input-prof-target" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                        <option id="opt-prof-boy" value="boy">唐老鴨的檔案</option>
+                        <option id="opt-prof-girl" value="girl">黛西的檔案</option>
+                    </select>
+                </div>
+                <input id="input-prof-label" type="text" placeholder="項目名稱 (例: 手搖飲甜度冰塊、鞋子尺寸、過敏食物)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+                <input id="input-prof-value" type="text" placeholder="內容紀錄 (例: 無糖微冰、24.5 cm、不吃香菜)" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
+            </div>
+            <button onclick="addProfileItem()" class="w-full py-3 rounded-2xl bg-donald-blue text-white text-sm font-bold shadow-md">儲存小檔案</button>
+        </div>
+    </div>
+
+    <!-- Modal: 雙人雲端同步房間密碼設定 -->
+    <div id="sync-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4 modal-animate">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-sailor-navy">☁️ 雙人手機即時同步設定</h3>
+                <button onclick="closeModal('sync-modal')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">✕</button>
+            </div>
+            <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-3.5 text-xs text-slate-600 space-y-1.5">
+                <p class="font-bold text-donald-blue">💡 如何讓兩支手機即時連動？</p>
+                <p>1. 請你和男友設定一組相同的**「情侶專屬房間密碼」**（建議 6 位以上英數字，避免與他人重複）。</p>
+                <p>2. 雙方都輸入並點擊「開啟雙人同步」後，任何新增或修改都會即時出現在彼此的手機上！</p>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1">情侶專屬房間密碼 (Room Code)</label>
+                    <input id="input-room-code" type="text" placeholder="例如：DonaldDaisy20240301" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-mono focus:outline-none focus:border-donald-blue">
+                </div>
+                <div id="current-room-info" class="hidden text-[11px] text-emerald-600 font-bold flex items-center justify-between bg-emerald-50 px-3 py-2 rounded-xl">
+                    <span>🟢 目前已連線房間：<span id="active-room-display" class="font-mono"></span></span>
+                    <button onclick="disconnectRoom()" class="text-rose-500 underline text-[10px]">中斷連線</button>
+                </div>
+            </div>
+            <button onclick="connectRoom()" class="w-full py-3 rounded-2xl bg-donald-blue text-white text-sm font-bold shadow-md hover:bg-blue-700 transition">開啟雙人即時同步 ✨</button>
+        </div>
+    </div>
+
+
+    <!-- ==================== 完整互動邏輯腳本 (含雲端即時同步) ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 1. 預設初始狀態資料
+        const todayStr = new Date().toISOString().split('T')[0];
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth();
+
+        const defaultState = {
+            settings: {
+                boyNick: '唐老鴨',
+                girlNick: '黛西',
+                anniversary: '2024-03-01',
+                bgIcon: '💖'
+            },
+            calendarEvents: [
+                { id: 1, date: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-14`, title: '浪漫情人節燭光晚餐 🕯️' },
+                { id: 2, date: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-22`, title: '台中勤美野餐約會 🧺' }
+            ],
+            fund: {
+                title: '日本東京迪士尼雙人行',
+                target: 60000,
+                logs: [
+                    { id: 101, type: 'deposit', amount: 38500, who: '唐老鴨', note: '初始基金存入', date: '2026.11.01' }
+                ]
+            },
+            restaurants: [
+                { id: 201, name: '屋馬燒肉', type: '頂級燒肉', note: '雙人約會紀念餐廳，雞湯超好喝', rating: '5.0' }
+            ],
+            memories: [
+                { id: 301, city: '台中市', title: '勤美綠園道散步', date: '2026.02.14', desc: '牽手散步喝手搖飲，度過了一個超級舒服的下午情人節！' }
+            ],
+            movies: [
+                { id: 401, title: '你的名字', place: '威秀影城', date: '2026.02.14', rating: '5.0 (雙人好評)' }
+            ],
+            concerts: [
+                { id: 501, title: '五月天 諾亞方舟世界巡迴演唱會', location: '高雄世運主場館 (搖滾 A 區)', date: '2025.12.31', rating: '5.0' }
+            ],
+            buckets: [
+                { id: 601, title: '一起去東京迪士尼樂園', done: true },
+                { id: 602, title: '在北海道看一場浪漫初雪', done: false },
+                { id: 603, title: '一起養一隻可愛的狗狗', done: false }
+            ],
+            capsules: [
+                { id: 701, sender: '唐老鴨', text: '謝謝妳一直陪在我身邊，希望我們每年都能一起去更多地方旅行！愛妳喔 ❤️', date: '2026.11.10' }
+            ],
+            profiles: {
+                boy: [
+                    { id: 801, label: '🥤 手搖飲習慣', value: '四季春珍波椰 • 微糖微冰' },
+                    { id: 802, label: '👟 衣服 / 鞋子尺寸', value: '上衣 L / 鞋子 US 10 (28cm)' },
+                    { id: 803, label: '🚫 飲食禁忌', value: '不吃苦瓜、茄子' },
+                    { id: 804, label: '🎁 近期想要禮物', value: '降噪耳機、Switch 遊戲片' }
+                ],
+                girl: [
+                    { id: 901, label: '🥤 手搖飲習慣', value: '熟成紅茶拿鐵 • 一分糖去冰' },
+                    { id: 902, label: '👗 衣服 / 鞋子尺寸', value: '上衣 S / 鞋子 23.5 cm' },
+                    { id: 903, label: '🚫 飲食禁忌', value: '不吃香菜、生蔥花' },
+                    { id: 904, label: '🌸 喜歡的驚喜', value: '草莓甜點、拍立得底片、手寫卡片' }
+                ]
+            }
+        };
+
+        let appState = JSON.parse(JSON.stringify(defaultState));
+        let viewYear = currentYear;
+        let viewMonth = currentMonth;
+        let selectedDateStr = todayStr;
+        let fundMode = 'deposit';
+        let activeProfileTab = 'boy';
+        let isSpinning = false;
+
+        // 雲端同步狀態變數
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        let currentRoomCode = '';
+        let unsubscribeSnapshot = null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'donald-daisy-couple-app';
+
+        // 初始化雲端服務
+        async function initCloudSync() {
+            try {
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    onAuthStateChanged(auth, (user) => {
+                        currentUser = user;
+                        // 檢查網址參數是否有帶入 ?room=xxx 方便情侶直接分享連結一鍵連線
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const roomFromUrl = urlParams.get('room');
+                        if (roomFromUrl && user) {
+                            joinCloudRoom(roomFromUrl.trim(), true);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.warn('雲端初始化提示:', err);
+            }
+        }
+
+        // 儲存狀態並同步到雲端
+        async function saveState() {
+            if (!db || !currentUser || !currentRoomCode) {
+                return;
+            }
+            try {
+                const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'couple_rooms', currentRoomCode);
+                await setDoc(roomDocRef, {
+                    payload: JSON.stringify(appState),
+                    updatedAt: Date.now()
+                });
+            } catch (err) {
+                console.error('雲端同步失敗:', err);
+                showToast('雲端同步遇到一點問題，請檢查網路連線');
+            }
+        }
+
+        // 加入或建立情侶專屬雲端房間
+        async function joinCloudRoom(roomCode, silent = false) {
+            if (!db || !currentUser) {
+                showToast('雲端連線尚未就緒，請稍後再試或使用單機體驗');
+                return;
+            }
+            const cleanCode = roomCode.replace(/[^a-zA-Z0-9_-]/g, '');
+            if (cleanCode.length < 4) {
+                showToast('房間密碼請至少輸入 4 個英數字！');
+                return;
+            }
+
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
+
+            currentRoomCode = cleanCode;
+            updateSyncUI(true, cleanCode);
+
+            const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'couple_rooms', cleanCode);
+
+            try {
+                const snap = await getDoc(roomDocRef);
+                if (!snap.exists()) {
+                    // 若為全新房間，將目前畫面上的初始資料寫入雲端
+                    await setDoc(roomDocRef, {
+                        payload: JSON.stringify(appState),
+                        updatedAt: Date.now()
+                    });
+                }
+            } catch (err) {
+                console.error('讀取房間錯誤:', err);
+            }
+
+            // 監聽即時變更，讓男友或女友修改時另一方秒同步
+            unsubscribeSnapshot = onSnapshot(roomDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data && data.payload) {
+                        try {
+                            const remoteState = JSON.parse(data.payload);
+                            appState = { ...defaultState, ...remoteState };
+                            renderAll();
+                        } catch (e) {
+                            console.error('解析同步資料錯誤:', e);
+                        }
+                    }
+                }
+            }, (error) => {
+                console.error('即時監聽錯誤:', error);
+            });
+
+            // 更新網址列參數，方便直接複製網址傳給另一半
+            try {
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('room', cleanCode);
+                window.history.replaceState({}, '', newUrl);
+            } catch (e) {}
+
+            if (!silent) {
+                closeModal('sync-modal');
+                showToast(`已連線至情侶房間「${cleanCode}」☁️`);
+            }
+        }
+
+        function updateSyncUI(isConnected, roomCode = '') {
+            const dot = document.getElementById('sync-dot');
+            const label = document.getElementById('sync-label');
+            const statusText = document.getElementById('sync-status-text');
+            const infoBox = document.getElementById('current-room-info');
+            const activeDisplay = document.getElementById('active-room-display');
+
+            if (isConnected) {
+                dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping';
+                label.textContent = '雙人同步中';
+                statusText.textContent = `雲端已連線 (${roomCode}) • 雙方即時同步`;
+                infoBox.classList.remove('hidden');
+                activeDisplay.textContent = roomCode;
+            } else {
+                dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400';
+                label.textContent = '單機模式';
+                statusText.textContent = '專屬甜蜜小天地 • 點擊右側設定雲端連線';
+                infoBox.classList.add('hidden');
+            }
+        }
+
+        window.openSyncModal = function() {
+            document.getElementById('input-room-code').value = currentRoomCode;
+            document.getElementById('sync-modal').classList.remove('hidden');
+        };
+
+        window.connectRoom = function() {
+            const code = document.getElementById('input-room-code').value.trim();
+            if (!code) {
+                showToast('請輸入情侶專屬房間密碼！');
+                return;
+            }
+            joinCloudRoom(code, false);
+        };
+
+        window.disconnectRoom = function() {
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
+            currentRoomCode = '';
+            updateSyncUI(false);
+            closeModal('sync-modal');
+            showToast('已切換回單機模式');
+        };
+
+        function renderAll() {
+            renderHeaderAndAnniversary();
+            renderCalendar();
+            renderFund();
+            renderRestaurants();
+            renderMemories();
+            renderMovies();
+            renderConcerts();
+            renderBuckets();
+            renderCapsules();
+            renderProfileSection();
+        }
+
+        // ==================== Toast 提示與分頁切換 ====================
+        let toastTimer = null;
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const textEl = document.getElementById('toast-text');
+            if (!container || !textEl) return;
+            textEl.textContent = msg;
+            container.classList.remove('opacity-0', '-translate-y-4');
+            container.classList.add('opacity-100', 'translate-y-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                container.classList.remove('opacity-100', 'translate-y-0');
+                container.classList.add('opacity-0', '-translate-y-4');
+            }, 2500);
+        }
+
+        function switchTab(tabName) {
+            const tabs = ['life', 'food', 'memories', 'profiles'];
+            tabs.forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const nav = document.getElementById(`nav-${t}`);
+                if (t === tabName) {
+                    view.classList.remove('hidden');
+                    nav.classList.remove('text-slate-400', 'hover:text-slate-600');
+                    nav.classList.add('text-donald-blue');
+                } else {
+                    view.classList.add('hidden');
+                    nav.classList.remove('text-donald-blue');
+                    nav.classList.add('text-slate-400', 'hover:text-slate-600');
+                }
+            });
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // ==================== 1. 設定與紀念日計時器 ====================
+        function renderHeaderAndAnniversary() {
+            const { boyNick, girlNick, anniversary, bgIcon } = appState.settings;
+            document.getElementById('header-boy').textContent = boyNick;
+            document.getElementById('header-girl').textContent = girlNick;
+            document.getElementById('tab-boy-name').textContent = boyNick;
+            document.getElementById('tab-girl-name').textContent = girlNick;
+            document.getElementById('anniversary-bg-icon').textContent = bgIcon || '💖';
+
+            // 更新下拉選單的暱稱選項
+            const optFundBoy = document.getElementById('opt-fund-boy');
+            const optFundGirl = document.getElementById('opt-fund-girl');
+            if (optFundBoy) { optFundBoy.value = boyNick; optFundBoy.textContent = boyNick; }
+            if (optFundGirl) { optFundGirl.value = girlNick; optFundGirl.textContent = girlNick; }
+
+            const optCapBoy = document.getElementById('opt-cap-boy');
+            const optCapGirl = document.getElementById('opt-cap-girl');
+            if (optCapBoy) { optCapBoy.value = boyNick; optCapBoy.textContent = `來自 ${boyNick}`; }
+            if (optCapGirl) { optCapGirl.value = girlNick; optCapGirl.textContent = `來自 ${girlNick}`; }
+
+            const optProfBoy = document.getElementById('opt-prof-boy');
+            const optProfGirl = document.getElementById('opt-prof-girl');
+            if (optProfBoy) optProfBoy.textContent = `${boyNick}的檔案`;
+            if (optProfGirl) optProfGirl.textContent = `${girlNick}的檔案`;
+
+            // 計算在一起天數與下次週年倒數
+            const start = new Date(anniversary + 'T00:00:00');
+            const now = new Date();
+            const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const diffDays = Math.floor((todayZero - start) / (1000 * 60 * 60 * 24)) + 1;
+
+            document.getElementById('days-count').textContent = diffDays > 0 ? diffDays.toLocaleString() : 0;
+            document.getElementById('anniversary-date-display').textContent = anniversary.replace(/-/g, '.');
+
+            let nextAnniv = new Date(todayZero.getFullYear(), start.getMonth(), start.getDate());
+            if (nextAnniv < todayZero) {
+                nextAnniv.setFullYear(todayZero.getFullYear() + 1);
+            }
+            const daysUntilNext = Math.ceil((nextAnniv - todayZero) / (1000 * 60 * 60 * 24));
+            document.getElementById('next-anniversary').textContent = daysUntilNext === 0 ? '就是今天！🎉' : `還有 ${daysUntilNext} 天`;
+        }
+
+        function openSettingsModal() {
+            document.getElementById('input-boy-nick').value = appState.settings.boyNick;
+            document.getElementById('input-girl-nick').value = appState.settings.girlNick;
+            document.getElementById('input-anniversary-date').value = appState.settings.anniversary;
+            document.getElementById('input-bg-icon-style').value = appState.settings.bgIcon || '💖';
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function saveSettings() {
+            const boyNick = document.getElementById('input-boy-nick').value.trim() || '唐老鴨';
+            const girlNick = document.getElementById('input-girl-nick').value.trim() || '黛西';
+            const anniversary = document.getElementById('input-anniversary-date').value || '2024-03-01';
+            const bgIcon = document.getElementById('input-bg-icon-style').value;
+
+            appState.settings = { boyNick, girlNick, anniversary, bgIcon };
+            saveState();
+            renderHeaderAndAnniversary();
+            closeModal('settings-modal');
+            showToast('專屬設定已儲存 💖');
+        }
+
+        // ==================== 2. 甜蜜行事曆 ====================
+        function renderCalendar() {
+            document.getElementById('calendar-month-title').textContent = `${viewYear}年 ${viewMonth + 1}月`;
+            const grid = document.getElementById('calendar-grid');
+            const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+            const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+            let html = '';
+            for (let i = 0; i < firstDay; i++) {
+                html += `<div class="h-9"></div>`;
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const hasEvents = appState.calendarEvents.some(e => e.date === dateStr);
+                const isSelected = dateStr === selectedDateStr;
+                const isToday = dateStr === todayStr;
+
+                let btnClass = 'h-9 rounded-xl flex flex-col items-center justify-center text-xs font-semibold relative transition ';
+                if (isSelected) {
+                    btnClass += 'bg-donald-blue text-white shadow-xs';
+                } else if (isToday) {
+                    btnClass += 'bg-donald-light text-donald-blue font-bold';
+                } else {
+                    btnClass += 'hover:bg-slate-100 text-slate-700';
+                }
+
+                html += `
+                    <button onclick="selectCalendarDate('${dateStr}')" class="${btnClass}">
+                        <span>${day}</span>
+                        ${hasEvents ? `<span class="w-1 h-1 rounded-full ${isSelected ? 'bg-donald-yellow' : 'bg-daisy-pink'} mt-0.5"></span>` : ''}
+                    </button>
+                `;
+            }
+            grid.innerHTML = html;
+            renderSelectedDateEvents();
+        }
+
+        function changeMonth(delta) {
+            viewMonth += delta;
+            if (viewMonth < 0) {
+                viewMonth = 11;
+                viewYear--;
+            } else if (viewMonth > 11) {
+                viewMonth = 0;
+                viewYear++;
+            }
+            renderCalendar();
+        }
+
+        function selectCalendarDate(dateStr) {
+            selectedDateStr = dateStr;
+            renderCalendar();
+        }
+
+        function renderSelectedDateEvents() {
+            const titleEl = document.getElementById('selected-date-title');
+            const listEl = document.getElementById('calendar-events-list');
+            titleEl.textContent = `${selectedDateStr.replace(/-/g, '.')} 的行程`;
+
+            const dayEvents = appState.calendarEvents.filter(e => e.date === selectedDateStr);
+            if (dayEvents.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-slate-400 py-1">這天還沒有安排行程喔，點擊右上角新增吧！</p>`;
+                return;
+            }
+
+            listEl.innerHTML = dayEvents.map(ev => `
+                <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs">
+                    <span class="font-bold text-sailor-navy">📌 ${escapeHTML(ev.title)}</span>
+                    <button onclick="deleteCalendarEvent(${ev.id})" class="text-slate-300 hover:text-red-500 text-xs px-1">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function openCalendarModal() {
+            document.getElementById('input-cal-date').value = selectedDateStr || todayStr;
+            document.getElementById('input-cal-title').value = '';
+            document.getElementById('calendar-modal').classList.remove('hidden');
+        }
+
+        function addCalendarEvent() {
+            const date = document.getElementById('input-cal-date').value;
+            const title = document.getElementById('input-cal-title').value.trim();
+            if (!date || !title) {
+                showToast('請選擇日期並輸入行程內容！');
+                return;
+            }
+            appState.calendarEvents.push({ id: Date.now(), date, title });
+            selectedDateStr = date;
+            const [y, m] = date.split('-').map(Number);
+            viewYear = y;
+            viewMonth = m - 1;
+            saveState();
+            renderCalendar();
+            closeModal('calendar-modal');
+            showToast('甜蜜行程已加入行事曆 🗓️');
+        }
+
+        function deleteCalendarEvent(id) {
+            appState.calendarEvents = appState.calendarEvents.filter(e => e.id !== id);
+            saveState();
+            renderCalendar();
+            showToast('已刪除該行程');
+        }
+
+        // ==================== 3. 共同夢想撲滿 ====================
+        function renderFund() {
+            const { title, target, logs } = appState.fund;
+            document.getElementById('fund-title-text').textContent = title;
+            document.getElementById('fund-target-text').textContent = Number(target).toLocaleString();
+
+            const total = logs.reduce((acc, log) => {
+                return log.type === 'deposit' ? acc + Number(log.amount) : acc - Number(log.amount);
+            }, 0);
+
+            const percent = target > 0 ? Math.min(100, Math.max(0, Math.round((total / target) * 100))) : 0;
+            document.getElementById('fund-current').textContent = total.toLocaleString();
+            document.getElementById('fund-percent').textContent = `${percent}%`;
+            document.getElementById('fund-bar').style.width = `${percent}%`;
+
+            const logsContainer = document.getElementById('fund-logs');
+            if (logs.length === 0) {
+                logsContainer.innerHTML = `<p class="text-xs text-slate-400">尚無存領紀錄</p>`;
+                return;
+            }
+
+            logsContainer.innerHTML = logs.slice().reverse().map(log => {
+                const isDep = log.type === 'deposit';
+                return `
+                    <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs">
+                        <div>
+                            <span class="font-bold ${isDep ? 'text-daisy-pink' : 'text-slate-500'}">${isDep ? '+' : '-'} NT$ ${Number(log.amount).toLocaleString()}</span>
+                            <span class="text-slate-400 text-[10px] ml-1.5">${escapeHTML(log.who)} • ${escapeHTML(log.note)}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-slate-400">${escapeHTML(log.date)}</span>
+                            <button onclick="deleteFundLog(${log.id})" class="text-slate-300 hover:text-red-500 text-xs px-1">✕</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openFundModal() {
+            setFundMode('deposit');
+            document.getElementById('input-fund-amount').value = '';
+            document.getElementById('input-fund-note').value = '';
+            document.getElementById('fund-modal').classList.remove('hidden');
+        }
+
+        function setFundMode(mode) {
+            fundMode = mode;
+            const btnDep = document.getElementById('mode-deposit');
+            const btnWith = document.getElementById('mode-withdraw');
+            if (mode === 'deposit') {
+                btnDep.className = 'flex-1 py-1.5 text-xs font-bold rounded-xl bg-white text-daisy-pink shadow-xs transition';
+                btnWith.className = 'flex-1 py-1.5 text-xs font-bold rounded-xl text-slate-500 transition';
+            } else {
+                btnWith.className = 'flex-1 py-1.5 text-xs font-bold rounded-xl bg-white text-donald-blue shadow-xs transition';
+                btnDep.className = 'flex-1 py-1.5 text-xs font-bold rounded-xl text-slate-500 transition';
+            }
+        }
+
+        function addFundRecord() {
+            const amount = Number(document.getElementById('input-fund-amount').value);
+            const who = document.getElementById('input-fund-who').value;
+            const note = document.getElementById('input-fund-note').value.trim() || (fundMode === 'deposit' ? '存入夢想基金' : '領出使用');
+
+            if (!amount || amount <= 0) {
+                showToast('請輸入正確的金額！');
+                return;
+            }
+
+            const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '.');
+            appState.fund.logs.push({
+                id: Date.now(),
+                type: fundMode,
+                amount,
+                who,
+                note,
+                date: dateStr
+            });
+            saveState();
+            renderFund();
+            closeModal('fund-modal');
+            showToast(fundMode === 'deposit' ? '成功存入夢想撲滿 🐷' : '已記錄領出明細');
+        }
+
+        function deleteFundLog(id) {
+            appState.fund.logs = appState.fund.logs.filter(l => l.id !== id);
+            saveState();
+            renderFund();
+            showToast('已刪除明細並重新計算金額');
+        }
+
+        function openEditFundModal() {
+            document.getElementById('input-edit-fund-title').value = appState.fund.title;
+            document.getElementById('input-edit-fund-target').value = appState.fund.target;
+            document.getElementById('edit-fund-modal').classList.remove('hidden');
+        }
+
+        function saveFundGoal() {
+            const title = document.getElementById('input-edit-fund-title').value.trim();
+            const target = Number(document.getElementById('input-edit-fund-target').value);
+            if (!title || !target || target <= 0) {
+                showToast('請輸入有效的目標名稱與金額！');
+                return;
+            }
+            appState.fund.title = title;
+            appState.fund.target = target;
+            saveState();
+            renderFund();
+            closeModal('edit-fund-modal');
+            showToast('夢想目標已更新 🎯');
+        }
+
+        // ==================== 4. 美食轉盤與餐廳牆 ====================
+        const foodOptions = [
+            '🔥 日式燒肉大餐', '🍲 暖呼呼麻辣火鍋', '🍝 浪漫義式義大利麵', '🍣 精緻日式壽司丼飯',
+            '🍔 美式漢堡薯條', '🍜 濃郁日式拉麵', '🥘 泰式酸辣料理', '🥟 台灣道地夜市小吃',
+            '🥩 氣氛牛排館', '🍛 香濃咖哩飯', '🥗 清爽早午餐 Brunch', '🍗 韓式炸雞配部隊鍋'
+        ];
+
+        function spinRoulette() {
+            if (isSpinning) return;
+            isSpinning = true;
+            const resultEl = document.getElementById('roulette-result');
+            const btn = document.getElementById('spin-btn');
+            btn.disabled = true;
+            btn.classList.add('opacity-60');
+
+            let count = 0;
+            const maxSpins = 22;
+            const interval = setInterval(() => {
+                const randItem = foodOptions[Math.floor(Math.random() * foodOptions.length)];
+                resultEl.textContent = randItem;
+                count++;
+                if (count >= maxSpins) {
+                    clearInterval(interval);
+                    const finalChoice = foodOptions[Math.floor(Math.random() * foodOptions.length)];
+                    resultEl.innerHTML = `🎉 決定就是：<span class="text-donald-blue underline decoration-donald-yellow decoration-4">${finalChoice}</span>`;
+                    isSpinning = false;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-60');
+                }
+            }, 75);
+        }
+
+        function renderRestaurants() {
+            const list = document.getElementById('restaurant-list');
+            const badge = document.getElementById('restaurant-count-badge');
+            badge.textContent = `${appState.restaurants.length} 家`;
+
+            if (appState.restaurants.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400 text-center py-3">還沒有餐廳紀錄，快去新增你們的愛店吧！</p>`;
+                return;
+            }
+
+            list.innerHTML = appState.restaurants.slice().reverse().map(rest => `
+                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-700">${escapeHTML(rest.type)}</span>
+                        <h4 class="text-xs font-bold text-sailor-navy mt-1">${escapeHTML(rest.name)}</h4>
+                        <p class="text-[10px] text-slate-400 mt-0.5">${escapeHTML(rest.note)}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-amber-500 font-bold">⭐ ${escapeHTML(rest.rating)}</span>
+                        <button onclick="deleteRestaurantItem(${rest.id})" class="text-slate-300 hover:text-red-500 text-xs px-1">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openRestaurantModal() {
+            document.getElementById('input-rest-name').value = '';
+            document.getElementById('input-rest-type').value = '';
+            document.getElementById('input-rest-note').value = '';
+            document.getElementById('restaurant-modal').classList.remove('hidden');
+        }
+
+        function addRestaurantItem() {
+            const name = document.getElementById('input-rest-name').value.trim();
+            const type = document.getElementById('input-rest-type').value.trim() || '美味餐廳';
+            const note = document.getElementById('input-rest-note').value.trim() || '雙人約會紀錄';
+            const rating = document.getElementById('input-rest-rating').value;
+
+            if (!name) {
+                showToast('請輸入餐廳名稱！');
+                return;
+            }
+
+            appState.restaurants.push({ id: Date.now(), name, type, note, rating });
+            saveState();
+            renderRestaurants();
+            closeModal('restaurant-modal');
+            showToast('已加入餐廳牆 🍽️');
+        }
+
+        function deleteRestaurantItem(id) {
+            appState.restaurants = appState.restaurants.filter(r => r.id !== id);
+            saveState();
+            renderRestaurants();
+            showToast('已刪除餐廳紀錄');
+        }
+
+        // ==================== 5. 回憶、足跡、影片、演唱會、願望、小紙條 ====================
+        function renderMemories() {
+            const cities = [...new Set(appState.memories.map(m => m.city))];
+            document.getElementById('footprint-count').textContent = cities.length;
+
+            document.getElementById('footprint-badges').innerHTML = cities.map(city => `
+                <span class="px-2.5 py-1 rounded-xl bg-blue-50 text-donald-blue text-xs font-bold border border-blue-100">📍 ${escapeHTML(city)}</span>
+            `).join('');
+
+            const list = document.getElementById('memory-list');
+            if (appState.memories.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400 text-center py-3">點擊右上角寫下第一篇足跡回憶吧！</p>`;
+                return;
+            }
+
+            list.innerHTML = appState.memories.slice().reverse().map(mem => `
+                <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs space-y-1 relative">
+                    <button onclick="deleteMemoryItem(${mem.id})" class="absolute top-2.5 right-2.5 text-slate-300 hover:text-red-500 text-xs">✕</button>
+                    <div class="flex justify-between font-bold text-sailor-navy pr-5">
+                        <span>${escapeHTML(mem.city)} • ${escapeHTML(mem.title)}</span>
+                        <span class="text-slate-400 text-[10px]">${escapeHTML(mem.date)}</span>
+                    </div>
+                    <p class="text-slate-500 leading-relaxed">${escapeHTML(mem.desc)}</p>
+                </div>
+            `).join('');
+        }
+
+        function openMemoryModal() {
+            document.getElementById('input-mem-title').value = '';
+            document.getElementById('input-mem-date').value = todayStr;
+            document.getElementById('input-mem-desc').value = '';
+            document.getElementById('memory-modal').classList.remove('hidden');
+        }
+
+        function addMemoryItem() {
+            const city = document.getElementById('input-mem-city').value;
+            const title = document.getElementById('input-mem-title').value.trim();
+            const date = (document.getElementById('input-mem-date').value || todayStr).replace(/-/g, '.');
+            const desc = document.getElementById('input-mem-desc').value.trim() || '留下美好的雙人回憶！';
+
+            if (!title) {
+                showToast('請輸入地點或標題！');
+                return;
+            }
+
+            appState.memories.push({ id: Date.now(), city, title, date, desc });
+            saveState();
+            renderMemories();
+            closeModal('memory-modal');
+            showToast(`已點亮 ${city} 足跡 🗺️`);
+        }
+
+        function deleteMemoryItem(id) {
+            appState.memories = appState.memories.filter(m => m.id !== id);
+            saveState();
+            renderMemories();
+            showToast('已刪除該回憶');
+        }
+
+        function renderMovies() {
+            document.getElementById('movie-count-badge').textContent = `${appState.movies.length} 部`;
+            const list = document.getElementById('movie-list');
+            if (appState.movies.length === 0) {
+                list.innerHTML = `<p class="col-span-2 text-xs text-slate-400 text-center py-3">尚無觀影紀錄</p>`;
+                return;
+            }
+            list.innerHTML = appState.movies.slice().reverse().map(m => `
+                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 flex flex-col justify-between space-y-2 relative">
+                    <button onclick="deleteMovieItem(${m.id})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 text-xs">✕</button>
+                    <div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-donald-blue">影片 🎬</span>
+                        <h4 class="text-xs font-bold text-sailor-navy mt-1.5 truncate pr-3">${escapeHTML(m.title)}</h4>
+                        <p class="text-[10px] text-slate-400 mt-0.5 truncate">${escapeHTML(m.date)} • ${escapeHTML(m.place)}</p>
+                    </div>
+                    <span class="text-[10px] text-amber-500 font-bold">⭐ ${escapeHTML(m.rating)}</span>
+                </div>
+            `).join('');
+        }
+
+        function openMovieModal() {
+            document.getElementById('input-movie-title').value = '';
+            document.getElementById('input-movie-place').value = '';
+            document.getElementById('input-movie-date').value = todayStr;
+            document.getElementById('movie-modal').classList.remove('hidden');
+        }
+
+        function addMovieItem() {
+            const title = document.getElementById('input-movie-title').value.trim();
+            const place = document.getElementById('input-movie-place').value.trim() || '甜蜜約會';
+            const date = (document.getElementById('input-movie-date').value || todayStr).replace(/-/g, '.');
+            const rating = document.getElementById('input-movie-rating').value;
+
+            if (!title) {
+                showToast('請輸入影片名稱！');
+                return;
+            }
+
+            appState.movies.push({ id: Date.now(), title, place, date, rating });
+            saveState();
+            renderMovies();
+            closeModal('movie-modal');
+            showToast('已新增觀影紀錄 🎬');
+        }
+
+        function deleteMovieItem(id) {
+            appState.movies = appState.movies.filter(m => m.id !== id);
+            saveState();
+            renderMovies();
+            showToast('已刪除影片紀錄');
+        }
+
+        function renderConcerts() {
+            document.getElementById('concert-count-badge').textContent = `${appState.concerts.length} 場`;
+            const list = document.getElementById('concert-list');
+            if (appState.concerts.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400 text-center py-3">尚無演唱會紀錄</p>`;
+                return;
+            }
+            list.innerHTML = appState.concerts.slice().reverse().map(c => `
+                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-pink-100 text-daisy-pink">演唱會 🎸</span>
+                        <h4 class="text-xs font-bold text-sailor-navy mt-1">${escapeHTML(c.title)}</h4>
+                        <p class="text-[10px] text-slate-400 mt-0.5">${escapeHTML(c.date)} • ${escapeHTML(c.location)}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-amber-500 font-bold">⭐ ${escapeHTML(c.rating)}</span>
+                        <button onclick="deleteConcertItem(${c.id})" class="text-slate-300 hover:text-red-500 text-xs px-1">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openConcertModal() {
+            document.getElementById('input-concert-title').value = '';
+            document.getElementById('input-concert-location').value = '';
+            document.getElementById('input-concert-date').value = todayStr;
+            document.getElementById('concert-modal').classList.remove('hidden');
+        }
+
+        function addConcertItem() {
+            const title = document.getElementById('input-concert-title').value.trim();
+            const location = document.getElementById('input-concert-location').value.trim() || '現場狂歡';
+            const date = (document.getElementById('input-concert-date').value || todayStr).replace(/-/g, '.');
+            const rating = document.getElementById('input-concert-rating').value;
+
+            if (!title) {
+                showToast('請輸入演唱會名稱！');
+                return;
+            }
+
+            appState.concerts.push({ id: Date.now(), title, location, date, rating });
+            saveState();
+            renderConcerts();
+            closeModal('concert-modal');
+            showToast('已儲存演唱會回憶 🎤');
+        }
+
+        function deleteConcertItem(id) {
+            appState.concerts = appState.concerts.filter(c => c.id !== id);
+            saveState();
+            renderConcerts();
+            showToast('已刪除演唱會紀錄');
+        }
+
+        function renderBuckets() {
+            const list = document.getElementById('bucket-list');
+            if (appState.buckets.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">寫下你們想一起完成的第一個願望吧！</p>`;
+                return;
+            }
+            list.innerHTML = appState.buckets.map(b => `
+                <div onclick="toggleBucket(${b.id})" class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs cursor-pointer transition hover:bg-slate-100/70">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${b.done ? 'bg-donald-blue border-donald-blue text-white' : 'border-slate-300 text-transparent'}">✓</span>
+                        <span class="font-bold ${b.done ? 'line-through text-slate-400' : 'text-sailor-navy'}">${escapeHTML(b.title)}</span>
+                    </div>
+                    <button onclick="event.stopPropagation(); deleteBucketItem(${b.id});" class="text-slate-300 hover:text-red-500 text-xs px-1">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function toggleBucket(id) {
+            const item = appState.buckets.find(b => b.id === id);
+            if (item) {
+                item.done = !item.done;
+                saveState();
+                renderBuckets();
+                if (item.done) showToast('恭喜又共同完成一個願望囉！🎉');
+            }
+        }
+
+        function openBucketModal() {
+            document.getElementById('input-bucket-title').value = '';
+            document.getElementById('bucket-modal').classList.remove('hidden');
+        }
+
+        function addBucketItem() {
+            const title = document.getElementById('input-bucket-title').value.trim();
+            if (!title) {
+                showToast('請輸入願望內容！');
+                return;
+            }
+            appState.buckets.push({ id: Date.now(), title, done: false });
+            saveState();
+            renderBuckets();
+            closeModal('bucket-modal');
+            showToast('已加入未來願望清單 ✨');
+        }
+
+        function deleteBucketItem(id) {
+            appState.buckets = appState.buckets.filter(b => b.id !== id);
+            saveState();
+            renderBuckets();
+            showToast('已移除該願望');
+        }
+
+        function renderCapsules() {
+            document.getElementById('capsule-count').textContent = appState.capsules.length;
+            const list = document.getElementById('capsule-list');
+            if (appState.capsules.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">還沒有任何小紙條，快寫第一張甜蜜悄悄話給對方吧！</p>`;
+                return;
+            }
+            list.innerHTML = appState.capsules.slice().reverse().map(cap => `
+                <div class="p-3 rounded-2xl bg-amber-50/70 border border-amber-100 text-xs space-y-1 relative">
+                    <button onclick="deleteCapsuleNote(${cap.id})" class="absolute top-2.5 right-2.5 text-slate-300 hover:text-red-500 text-xs">✕</button>
+                    <div class="flex items-center justify-between pr-5">
+                        <span class="font-bold text-donald-blue">💌 來自 ${escapeHTML(cap.sender)}</span>
+                        <span class="text-[10px] text-slate-400">${escapeHTML(cap.date)}</span>
+                    </div>
+                    <p class="text-slate-700 leading-relaxed pt-0.5">${escapeHTML(cap.text)}</p>
+                </div>
+            `).join('');
+        }
+
+        function openCapsuleModal() {
+            renderCapsules();
+            document.getElementById('input-capsule-text').value = '';
+            document.getElementById('capsule-modal').classList.remove('hidden');
+        }
+
+        function addCapsuleNote() {
+            const sender = document.getElementById('input-capsule-sender').value;
+            const text = document.getElementById('input-capsule-text').value.trim();
+            if (!text) {
+                showToast('請輸入想對另一半說的話！');
+                return;
+            }
+            const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '.');
+            appState.capsules.push({ id: Date.now(), sender, text, date: dateStr });
+            saveState();
+            renderCapsules();
+            document.getElementById('input-capsule-text').value = '';
+            showToast('甜蜜小紙條已貼上 💌');
+        }
+
+        function deleteCapsuleNote(id) {
+            appState.capsules = appState.capsules.filter(c => c.id !== id);
+            saveState();
+            renderCapsules();
+            showToast('已刪除該張紙條');
+        }
+
+        // ==================== 6. 貼心小檔案分頁切換 ====================
+        function switchProfileTab(target) {
+            activeProfileTab = target;
+            const btnBoy = document.getElementById('btn-profile-boy');
+            const btnGirl = document.getElementById('btn-profile-girl');
+            if (target === 'boy') {
+                btnBoy.className = 'flex-1 py-2 text-xs font-bold rounded-xl bg-white text-donald-blue shadow-xs transition';
+                btnGirl.className = 'flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 transition';
+            } else {
+                btnGirl.className = 'flex-1 py-2 text-xs font-bold rounded-xl bg-white text-daisy-pink shadow-xs transition';
+                btnBoy.className = 'flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 transition';
+            }
+            renderProfileSection();
+        }
+
+        function renderProfileSection() {
+            const container = document.getElementById('profile-content-container');
+            const items = appState.profiles[activeProfileTab] || [];
+
+            if (items.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">還沒有任何紀錄，點擊右上角「+ 新增項目」吧！</p>`;
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold ${activeProfileTab === 'boy' ? 'text-donald-blue' : 'text-daisy-pink'} block">${escapeHTML(item.label)}</span>
+                        <p class="text-xs font-semibold text-sailor-navy mt-1">${escapeHTML(item.value)}</p>
+                    </div>
+                    <button onclick="deleteProfileItem(${item.id})" class="text-slate-300 hover:text-red-500 text-xs px-1">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function openProfileModal() {
+            document.getElementById('input-prof-target').value = activeProfileTab;
+            document.getElementById('input-prof-label').value = '';
+            document.getElementById('input-prof-value').value = '';
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        function addProfileItem() {
+            const target = document.getElementById('input-prof-target').value;
+            const label = document.getElementById('input-prof-label').value.trim();
+            const value = document.getElementById('input-prof-value').value.trim();
+
+            if (!label || !value) {
+                showToast('請填寫完整的項目與內容！');
+                return;
+            }
+
+            appState.profiles[target].push({ id: Date.now(), label, value });
+            saveState();
+            switchProfileTab(target);
+            closeModal('profile-modal');
+            showToast('已新增貼心小檔案項目 👤');
+        }
+
+        function deleteProfileItem(id) {
+            appState.profiles[activeProfileTab] = appState.profiles[activeProfileTab].filter(i => i.id !== id);
+            saveState();
+            renderProfileSection();
+            showToast('已刪除該項目');
+        }
+
+        // 防止 XSS 跳脫字元
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // 掛載全域函數供 HTML onclick 呼叫
+        window.switchTab = switchTab;
+        window.closeModal = closeModal;
+        window.openSettingsModal = openSettingsModal;
+        window.saveSettings = saveSettings;
+        window.changeMonth = changeMonth;
+        window.selectCalendarDate = selectCalendarDate;
+        window.openCalendarModal = openCalendarModal;
+        window.addCalendarEvent = addCalendarEvent;
+        window.deleteCalendarEvent = deleteCalendarEvent;
+        window.openFundModal = openFundModal;
+        window.setFundMode = setFundMode;
+        window.addFundRecord = addFundRecord;
+        window.deleteFundLog = deleteFundLog;
+        window.openEditFundModal = openEditFundModal;
+        window.saveFundGoal = saveFundGoal;
+        window.spinRoulette = spinRoulette;
+        window.openRestaurantModal = openRestaurantModal;
+        window.addRestaurantItem = addRestaurantItem;
+        window.deleteRestaurantItem = deleteRestaurantItem;
+        window.openMemoryModal = openMemoryModal;
+        window.addMemoryItem = addMemoryItem;
+        window.deleteMemoryItem = deleteMemoryItem;
+        window.openMovieModal = openMovieModal;
+        window.addMovieItem = addMovieItem;
+        window.deleteMovieItem = deleteMovieItem;
+        window.openConcertModal = openConcertModal;
+        window.addConcertItem = addConcertItem;
+        window.deleteConcertItem = deleteConcertItem;
+        window.toggleBucket = toggleBucket;
+        window.openBucketModal = openBucketModal;
+        window.addBucketItem = addBucketItem;
+        window.deleteBucketItem = deleteBucketItem;
+        window.openCapsuleModal = openCapsuleModal;
+        window.addCapsuleNote = addCapsuleNote;
+        window.deleteCapsuleNote = deleteCapsuleNote;
+        window.switchProfileTab = switchProfileTab;
+        window.openProfileModal = openProfileModal;
+        window.addProfileItem = addProfileItem;
+        window.deleteProfileItem = deleteProfileItem;
+
+        // ==================== 初始化啟動 ====================
+        window.addEventListener('DOMContentLoaded', () => {
+            renderAll();
+            initCloudSync();
+        });
+    </script>
+</body>
+</html>
